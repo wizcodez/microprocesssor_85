@@ -6,9 +6,10 @@ import java.util.Arrays;
  * @author Sairaj
  */
 class arithmetic {
-    public static String setup = "00000000";
-    public static int A,B,C,D,E,H,L;
-     public static char[] FlagReg = setup.toCharArray();  
+    private static String setup = "00000000";
+    private static int A,B,C,D,E,H,L;
+    private static int memory[] = new int[0xffff];
+     public static char[] FlagReg;
 
     public static char[] getFlagReg() {
         return FlagReg;
@@ -73,9 +74,15 @@ class arithmetic {
     public static void setB(int B) {
         arithmetic.B = B;
     }
+    
+    public static void initialize()
+    {
+        FlagReg = setup.toCharArray();  
+        Arrays.fill(memory, 0x0000);
+    }
 
     //Addition without carry
-     public static String ADD(int B) {        
+    public static String ADD(int B) {        
         int temp = arithmetic.getA();
         char[] temp1 = arithmetic.getFlagReg();
         String a = hex2bin(temp);
@@ -89,21 +96,23 @@ class arithmetic {
             
         if(temp>0xff)
         {
-                 
-                 temp1[7]='1';
+                 temp1[7]='1';     //carry flag set
                  arithmetic.setFlagReg(temp1);
                  arithmetic.setA(temp-0xFF-1);
                 System.out.println(arithmetic.getFlagReg()); 
         }
         else if(temp==0x00)
         {
-            System.out.println("zero flag set");
-                 arithmetic.setA(temp);   
+                temp1[1]='1';      //zero flag set
+                 arithmetic.setFlagReg(temp1);
+                 arithmetic.setA(temp);
+                System.out.println(arithmetic.getFlagReg());   
         }
         else
         {
                 arithmetic.setA(temp);
                 temp1[7]='0';
+                temp1[1]='0';
                 arithmetic.setFlagReg(temp1);
         }
         return String.format("%02x",arithmetic.getA());
@@ -124,24 +133,28 @@ class arithmetic {
             
         if(temp>0xff)
             {       
-                temp1[7]='1';
+                temp1[7]='1';      //carry flag set
                 arithmetic.setFlagReg(temp1);
                 arithmetic.setA(temp-0xFF-1);
             }
         else if(temp==0x00)
             {
-                System.out.println("zero flag set");
-                arithmetic.setA(temp);   
+                temp1[1]='1';      //zero flag set
+                 arithmetic.setFlagReg(temp1);
+                 arithmetic.setA(temp);
+                System.out.println(arithmetic.getFlagReg());    
             }
         else
             {
                 arithmetic.setA(temp);
                 temp1[7]='0';
+                temp1[1]='0';
                 arithmetic.setFlagReg(temp1);
             }
         return String.format("%02x",arithmetic.getA());
     }
     
+    //Increment
     public static void INR(int value,int c){
         value++;
         char temp1[]=arithmetic.getFlagReg();
@@ -165,6 +178,111 @@ class arithmetic {
         default: System.out.println("invalid input"); break;
         }
         
+    }
+    
+    //Decrement
+    public static void DCR(int value,int c){
+        value--;
+        char temp1[]=arithmetic.getFlagReg();
+         if(value==0)
+            {   
+                temp1[7]='0';
+                value = 0;
+            }
+         else{
+             temp1[7]=temp1[7];
+         }
+        switch(c){
+        case 1:   arithmetic.setA(value);
+        case 2:   arithmetic.setB(value);
+        case 3:   arithmetic.setC(value);
+        case 4:   arithmetic.setD(value);
+        case 5:   arithmetic.setE(value);
+        case 6:   arithmetic.setH(value);
+        case 7:   arithmetic.setL(value);
+        case 8:   arithmetic.setL(value);  // INR M how to do?????
+        default: System.out.println("invalid input"); break;
+        }
+        
+    }
+    
+    //Subtract without carry                     //-------check this out
+    public static String SUB(int B) {        
+        int temp = arithmetic.getA();
+        char[] temp1 = arithmetic.getFlagReg();
+        String a = hex2bin(temp);
+         System.out.println(a);
+        String b = hex2bin(B);
+         System.out.println(b);
+        temp=temp-B;
+//    String temp = Integer.toHexString(A);
+//   int k = Integer.parseInt(temp,16);
+//   System.out.println(k);
+            
+        if(temp<0x00)
+        {
+                 
+                 temp1[0]='1';        //sign flag set
+                 arithmetic.setFlagReg(temp1);
+                 arithmetic.setA(temp);
+                System.out.println(arithmetic.getFlagReg()); 
+        }
+        else if(temp==0x00)
+        {
+                temp1[1]='1';        //zero flag set
+                 arithmetic.setFlagReg(temp1);
+                 arithmetic.setA(temp);
+                System.out.println(arithmetic.getFlagReg());   
+        }
+        else
+        {
+                arithmetic.setA(temp);
+                temp1[0]='0';
+                temp1[1]='0';
+                arithmetic.setFlagReg(temp1);
+        }
+        return String.format("%02x",arithmetic.getA());
+    }
+    
+    //Subtract with carry
+    public static String SBB(int B) {
+         int temp = arithmetic.getA();
+         char[] temp1 = arithmetic.getFlagReg();
+        String a = hex2bin(temp);
+         System.out.println(a);
+        String b = hex2bin(B);
+         System.out.println(b);
+        temp=temp-B-Character.getNumericValue(temp1[7]);;
+//    String temp = Integer.toHexString(A);                                     //convert int to hex and store in registers;
+//   int k = Integer.parseInt(temp,16);
+//   System.out.println(k);
+            
+        if(temp<0x00)
+            {       
+                temp1[0]='1';            //sign flag set
+                arithmetic.setFlagReg(temp1);
+                arithmetic.setA(temp);
+            }
+        else if(temp==0x00)
+            {
+                temp1[1]='1';            //zero flag set
+                arithmetic.setFlagReg(temp1);
+                arithmetic.setA(temp);
+            }
+        else
+            {
+                arithmetic.setA(temp);
+                temp1[1]='0';
+                temp1[0]='0';
+                arithmetic.setFlagReg(temp1);
+            }
+        return String.format("%02x",arithmetic.getA());
+    }
+    
+    //Move instruction                                 //how to differentiate immediate operation ie MVI from MOv
+    public static void MOV(int R1, int R2)
+    {
+        R1 = R2;
     }
     
     
