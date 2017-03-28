@@ -1,170 +1,227 @@
+
+
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package javaapplication18;
+* @author Sairaj Hemachandran & Nishka Gulati
+*/
+//DAA is to be done...
 
-
-import java.util.Arrays;
-
-/**
- *
- * @author Sairaj
- */
-class arithmetic {
-    private static String setup = "00000000";
-    private static int A,B,C,D,E,H,L;
-    private static int memory[] = new int[0xffff];
-     public static char[] FlagReg;
-
-    public static char[] getFlagReg() {
-        return FlagReg;
-    }
-
-    public static void setFlagReg(char[] FlagReg) {
-        arithmetic.FlagReg = FlagReg;
-    }
-
-    public static int getC() {
-        return C;
-    }
-
-    public static void setC(int C) {
-        arithmetic.C = C;
-    }
-
-    public static int getD() {
-        return D;
-    }
-
-    public static void setD(int D) {
-        arithmetic.D = D;
-    }
-
-    public static int getE() {
-        return E;
-    }
-
-    public static void setE(int E) {
-        arithmetic.E = E;
-    }
-
-    public static int getH() {
-        return H;
-    }
-
-    public static void setH(int H) {
-        arithmetic.H = H;
-    }
-
-    public static int getL() {
-        return L;
-    }
-
-    public static void setL(int L) {
-        arithmetic.L = L;
-    }
-
-    public static int getA() {
-        return A;
-    }
-
-    public static void setA(int A) {
-        arithmetic.A = A;
-    }
-
-    public static int getB() {
-        return B;
-    }
-
-    public static void setB(int B) {
-        arithmetic.B = B;
-    }
-    
-    public static void initialize()
-    {
-        FlagReg = setup.toCharArray();  
-        Arrays.fill(memory, 0x0000);
-    }
-
+class arithmetic extends Initialization {
+   
     //Addition without carry
-    public static String ADD(int B) {        
-        int temp = arithmetic.getA();
-        char[] temp1 = arithmetic.getFlagReg();
-        String a = hex2bin(temp);
-         System.out.println(a);
-        String b = hex2bin(B);
-         System.out.println(b);
-        temp=temp+B;
-//    String temp = Integer.toHexString(A);
-//   int k = Integer.parseInt(temp,16);
-//   System.out.println(k);
-            
-        if(temp>0xff)
-        {
-                 temp1[7]='1';     //carry flag set
-                 arithmetic.setFlagReg(temp1);
-                 arithmetic.setA(temp-0xFF-1);
-                System.out.println(arithmetic.getFlagReg()); 
+    public static void ADD(char register){
+        
+        switch(register){
+            case 'A': ADI(A); break;
+            case 'B': ADI(B); break;
+            case 'C': ADI(C); break;
+            case 'D': ADI(D); break;
+            case 'E': ADI(E); break;
+            case 'H': ADI(H); break;
+            case 'L': ADI(L); break;
+            case 'M': 
+                {
+                    int address = generateAddress(L, H);
+                    ADI(memory[address]);
+                    break;
+                }
+            default: System.out.println("invalid input"); break;
         }
-        else if(temp==0x00)
-        {
-                temp1[1]='1';      //zero flag set
-                 arithmetic.setFlagReg(temp1);
-                 arithmetic.setA(temp);
-                System.out.println(arithmetic.getFlagReg());   
-        }
-        else
-        {
-                arithmetic.setA(temp);
-                temp1[7]='0';
-                temp1[1]='0';
-                arithmetic.setFlagReg(temp1);
-        }
-        return String.format("%02x",arithmetic.getA());
     }
     
     //Addition with carry
-    public static String ADC(int B) {
-         int temp = arithmetic.getA();
-         char[] temp1 = arithmetic.getFlagReg();
-        String a = hex2bin(temp);
-         System.out.println(a);
-        String b = hex2bin(B);
-         System.out.println(b);
-        temp=temp+B+Character.getNumericValue(temp1[7]);;
-//    String temp = Integer.toHexString(A);                                     //convert int to hex and store in registers;
-//   int k = Integer.parseInt(temp,16);
-//   System.out.println(k);
+    public static void ADC(char register){
+        
+        switch(register){
+            case 'A': ACI(A); break;
+            case 'B': ACI(B); break;
+            case 'C': ACI(C); break;
+            case 'D': ACI(D); break;
+            case 'E': ACI(E); break;
+            case 'H': ACI(H); break;
+            case 'L': ACI(L); break;
+            case 'M': 
+                {
+                    int address = generateAddress(L, H);
+                    ACI(memory[address]);
+                    break;
+                }
+            default: System.out.println("invalid input"); break;
+        }
+    }
+    
+    //Addition of immediate data without carry
+    public static void ADI(int B) {        
+        
+        char[] temp1 = getFlagReg();
+        
+        A=A+B;
+        int temp_x = A & 0x0f;
+        int temp_y = B & 0x0f;
+        if(temp_x+temp_y>0x0f)
+        {
+            temp1[3]='1';
+        }else temp1[3]='0';
+        if(A>0xff)
+        {
+                temp1[7]='1';     //carry flag set
+                setA(A-0xFF-1);
+        }else temp1[7]='0';
+        
+        if(A==0x00) temp1[1]='1';      //zero flag set  
+        else temp1[1]='0';
+        
+        
+        setFlagReg(temp1);
+    }
+    
+    //Addition immediate data with carry
+    public static void ACI(int B) {
+        char[] temp1 = getFlagReg();
+        
+        A=A+B+Character.getNumericValue(temp1[7]);
+        int temp_x = A & 0x0f;
+        int temp_y = (B+Character.getNumericValue(temp1[7])) & 0x0f;
+        if(temp_x+temp_y>0x0f)
+        {
+            temp1[3]='1';
+        }else temp1[3]='0';
+        if(A>0xff)
+        {
+                temp1[7]='1';     //carry flag set
+                setA(A-0xFF-1);
+        }else temp1[7]='0';
+        
+        if(A==0x00) temp1[1]='1';      //zero flag set  
+        else temp1[1]='0';
+        
+        setFlagReg(temp1);
+        
+    }
+    
+    //Subtraction without borrow
+    public static void SUB(char register){
+        
+        switch(register){
+            case 'A': SUI(A); break;
+            case 'B': SUI(B); break;
+            case 'C': SUI(C); break;
+            case 'D': SUI(D); break;
+            case 'E': SUI(E); break;
+            case 'H': SUI(H); break;
+            case 'L': SUI(L); break;
+            case 'M': 
+                {
+                    int address = generateAddress(L, H);
+                    SUI(memory[address]);
+                    break;
+                }
+            default: System.out.println("invalid input"); break;
+        }
+    }
+    
+    //Subtraction with borrow
+    public static void SBB(char register){
+        switch(register){
+            case 'A': SBI(A); break;
+            case 'B': SBI(B); break;
+            case 'C': SBI(C); break;
+            case 'D': SBI(D); break;
+            case 'E': SBI(E); break;
+            case 'H': SBI(H); break;
+            case 'L': SBI(L); break;
+            case 'M': 
+                {
+                    int address = generateAddress(L, H);
+                    SBI(memory[address]);
+                    break;
+                }
+            default: System.out.println("invalid input"); break;
+        }
+    }
+    
+      //Subtraction of immediate data without borrow 
+    public static void SUI(int B) {        
+        int temp = getA();
+        char[] temp1 = getFlagReg();
+        
+        temp=temp-B;
+   
+        if(temp<0x00)
+        {
+                 
+                temp1[0]='1';        //sign flag set
+                setFlagReg(temp1);
+                setA(temp);
+                System.out.println(getFlagReg()); 
+        }
+        else if(temp==0x00)
+        {
+                temp1[1]='1';        //zero flag set
+                setFlagReg(temp1);
+                setA(temp);
+                System.out.println(getFlagReg());   
+        }
+        else
+        {
+                setA(temp);
+                temp1[0]='0';
+                temp1[1]='0';
+                setFlagReg(temp1);
+        }
+        
+    }
+    
+    //Subtract of immediate data with borrow
+    public static void SBI(int B) {
+         int temp = getA();
+         char[] temp1 = getFlagReg();
+        
+        temp=temp-B-Character.getNumericValue(temp1[7]);;
+
             
-        if(temp>0xff)
+        if(temp<0x00)
             {       
-                temp1[7]='1';      //carry flag set
-                arithmetic.setFlagReg(temp1);
-                arithmetic.setA(temp-0xFF-1);
+                temp1[0]='1';            //sign flag set
+                setFlagReg(temp1);
+                setA(temp);
             }
         else if(temp==0x00)
             {
-                temp1[1]='1';      //zero flag set
-                 arithmetic.setFlagReg(temp1);
-                 arithmetic.setA(temp);
-                System.out.println(arithmetic.getFlagReg());    
+                temp1[1]='1';            //zero flag set
+                setFlagReg(temp1);
+                setA(temp);
             }
         else
             {
-                arithmetic.setA(temp);
-                temp1[7]='0';
+                setA(temp);
                 temp1[1]='0';
-                arithmetic.setFlagReg(temp1);
+                temp1[0]='0';
+                setFlagReg(temp1);
             }
-        return String.format("%02x",arithmetic.getA());
+        
     }
     
-    //Increment
-    public static void INR(int value,int c){
+     //Increment
+    public static void INR(char register){
+        int value=0;
+        int address = generateAddress(L, H);
+        switch(register){
+            case 'A': value=A; break;
+            case 'B': value=B; break;
+            case 'C': value=C; break;
+            case 'D': value=D; break;
+            case 'E': value=E; break;
+            case 'H': value=H; break;
+            case 'L': value=L; break;
+            case 'M': 
+                {
+                    value = memory[address];
+                    break;
+                }
+            default: System.out.println("invalid input"); break;
+        }
         value++;
-        char temp1[]=arithmetic.getFlagReg();
+        char temp1[]=getFlagReg();
          if(value>0xff)
             {   
                 temp1[7]='1';
@@ -173,24 +230,41 @@ class arithmetic {
          else{
              temp1[7]='0';
          }
-        switch(c){
-        case 1:   arithmetic.setA(value); break;
-        case 2:   arithmetic.setB(value); break;
-        case 3:   arithmetic.setC(value); break;
-        case 4:   arithmetic.setD(value); break;
-        case 5:   arithmetic.setE(value); break;
-        case 6:   arithmetic.setH(value); break;
-        case 7:   arithmetic.setL(value); break;
-        case 8:   arithmetic.setL(value); break;  // INR M how to do?????
+        switch(register){
+        case 'A':   setA(value); break;
+        case 'B':   setB(value); break;
+        case 'C':   setC(value); break;
+        case 'D':   setD(value); break;
+        case 'E':   setE(value); break;
+        case 'H':   setH(value); break;
+        case 'L':   setL(value); break;
+        case 'M':   memory[address] = value; break;
         default: System.out.println("invalid input"); break;
         }
         
     }
     
     //Decrement
-    public static void DCR(int value,int c){
+    public static void DCR(char register){
+        int value=0;
+        int address = generateAddress(L, H);
+        switch(register){
+            case 'A': value=A; break;
+            case 'B': value=B; break;
+            case 'C': value=C; break;
+            case 'D': value=D; break;
+            case 'E': value=E; break;
+            case 'H': value=H; break;
+            case 'L': value=L; break;
+            case 'M': 
+                {
+                    value = memory[address];
+                    break;
+                }
+            default: System.out.println("invalid input"); break;
+        }
         value--;
-        char temp1[]=arithmetic.getFlagReg();
+        char temp1[]=getFlagReg();
          if(value==0)
             {   
                 temp1[7]='0';
@@ -199,179 +273,172 @@ class arithmetic {
          else{
              temp1[7]=temp1[7];
          }
-        switch(c){
-        case 1:   arithmetic.setA(value); break;
-        case 2:   arithmetic.setB(value); break;
-        case 3:   arithmetic.setC(value); break;
-        case 4:   arithmetic.setD(value); break;
-        case 5:   arithmetic.setE(value); break;
-        case 6:   arithmetic.setH(value); break;
-        case 7:   arithmetic.setL(value); break;
-        case 8:   arithmetic.setL(value); break; // INR M how to do?????
+        switch(register){
+        case 'A':   setA(value); break;
+        case 'B':   setB(value); break;
+        case 'C':   setC(value); break;
+        case 'D':   setD(value); break;
+        case 'E':   setE(value); break;
+        case 'H':   setH(value); break;
+        case 'L':   setL(value); break;
+        case 'M':   memory[address] = value; break;
         default: System.out.println("invalid input"); break;
         }
         
     }
     
-    //Subtract without carry                     //-------check this out
-    public static String SUB(int B) {        
-        int temp = arithmetic.getA();
-        char[] temp1 = arithmetic.getFlagReg();
-        String a = hex2bin(temp);
-         System.out.println(a);
-        String b = hex2bin(B);
-         System.out.println(b);
-        temp=temp-B;
-//    String temp = Integer.toHexString(A);
-//   int k = Integer.parseInt(temp,16);
-//   System.out.println(k);
-            
-        if(temp<0x00)
-        {
-                 
-                 temp1[0]='1';        //sign flag set
-                 arithmetic.setFlagReg(temp1);
-                 arithmetic.setA(temp);
-                System.out.println(arithmetic.getFlagReg()); 
-        }
-        else if(temp==0x00)
-        {
-                temp1[1]='1';        //zero flag set
-                 arithmetic.setFlagReg(temp1);
-                 arithmetic.setA(temp);
-                System.out.println(arithmetic.getFlagReg());   
-        }
-        else
-        {
-                arithmetic.setA(temp);
-                temp1[0]='0';
-                temp1[1]='0';
-                arithmetic.setFlagReg(temp1);
-        }
-        return String.format("%02x",arithmetic.getA());
-    }
-    
-    //Subtract with carry
-    public static String SBB(int B) {
-         int temp = arithmetic.getA();
-         char[] temp1 = arithmetic.getFlagReg();
-        String a = hex2bin(temp);
-         System.out.println(a);
-        String b = hex2bin(B);
-         System.out.println(b);
-        temp=temp-B-Character.getNumericValue(temp1[7]);;
-//    String temp = Integer.toHexString(A);                                     //convert int to hex and store in registers;
-//   int k = Integer.parseInt(temp,16);
-//   System.out.println(k);
-            
-        if(temp<0x00)
-            {       
-                temp1[0]='1';            //sign flag set
-                arithmetic.setFlagReg(temp1);
-                arithmetic.setA(temp);
-            }
-        else if(temp==0x00)
-            {
-                temp1[1]='1';            //zero flag set
-                arithmetic.setFlagReg(temp1);
-                arithmetic.setA(temp);
-            }
-        else
-            {
-                arithmetic.setA(temp);
-                temp1[1]='0';
-                temp1[0]='0';
-                arithmetic.setFlagReg(temp1);
-            }
-        return String.format("%02x",arithmetic.getA());
-    }
-////////////////////////////////////////////////////////////////////// //////////////////////////////
-                                //DATA TRANSFER//
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Move immediate instruction                                 //how to differentiate immediate operation ie MVI from MOv
-    public static void MVI(int R1, int R2)
-    {
-        R1 = R2;
-    }
-    
-    //Move instruction                                 //how to differentiate immediate operation ie MVI from MOv
-    public static void MOV(int R1, int R2)
-    {
-        R1 = R2;
-    }
-    
-    //Load Accumulator 
-    public static void LDA(int address){ 
-        int temp = arithmetic.memory[address];
-        arithmetic.setA(temp);
-    }
-    
-    //Store Accumulator content 
-    public static void STA(int address){
-        int temp = arithmetic.getA();
-        arithmetic.memory[address] = temp;
-    }
-    
-    //Load HL register pair
-    public static void LHLD(int address){ 
-        int temp = arithmetic.memory[address];
-        arithmetic.setL(temp);
-        temp = arithmetic.memory[address+1];
-        arithmetic.setH(temp);
-    }
-    
-    //Store HL register pair
-    public static void SHLD(int address){ 
-        int temp = arithmetic.getL();
-        arithmetic.memory[address] = temp;
-        temp = arithmetic.getH();
-        arithmetic.memory[address+1] = temp;
-    }
-    
-    //Load register pair
-    public static void LXI(char X,int word){ 
-        int byte1 = word & 0x00ff;
-        int byte2 = word & 0xff00;
+    //Increment register pair
+    public static void INX(char X){
+        char[] temp1 = getFlagReg();
         switch(X)
         {
             case 'H':{
-                        arithmetic.setH(byte2);
-                        arithmetic.setL(byte1);
+                        L++;
+                        if(L>0xff){
+                            setL(L - 0xff - 1);
+                            H++;
+                        }
+                        if(H>0xff){
+                            temp1[7] = '1';
+                            setH(H - 0xff - 1);                            
+                        }else temp1[7] = '0';
+                        
+                        if(H == 0x00 && L == 0x00)temp1[1] = '1';
+                        else temp1[1] = '0';
+                        
+                        setFlagReg(temp1);
                         break;
                      }
             case 'B':{
-                        arithmetic.setB(byte2);
-                        arithmetic.setC(byte1);
+                        C++;
+                        if(L>0xff){
+                            setC(C - 0xff - 1);
+                            B++;
+                        }
+                        if(B>0xff){
+                            temp1[7] = '1';
+                            setB(B - 0xff - 1);                            
+                        }else temp1[7] = '0';
+                        
+                        if(B == 0x00 && C == 0x00)temp1[1] = '1';
+                        else temp1[1] = '0';
+                        
+                        setFlagReg(temp1);
                         break;
                      }
             case 'D':{
-                        arithmetic.setD(byte2);
-                        arithmetic.setE(byte1);
+                        E++;
+                        if(E>0xff){
+                            setE(E - 0xff - 1);
+                            E++;
+                        }
+                        if(D>0xff){
+                            temp1[7] = '1';
+                            setD(D - 0xff - 1);                            
+                        }else temp1[7] = '0';
+                        
+                        if(D == 0x00 && E == 0x00)temp1[1] = '1';
+                        else temp1[1] = '0';
+                        
+                        setFlagReg(temp1);
                         break;
                      }
             default: System.out.println("invalid input");
         }
-
     }
     
-    public static void XCHG(){
-        int temp1 = arithmetic.getH();
-        int temp2 = arithmetic.getL();
-        arithmetic.setH(arithmetic.getD());
-        arithmetic.setL(arithmetic.getE());
-        arithmetic.setD(temp1);
-        arithmetic.setE(temp2);
+    //Decrement register pair
+    public static void DCX(char X){
+        char[] temp1 = getFlagReg();
+        switch(X)
+        {
+            case 'H':{
+                        L--;
+                        if(L==0x00){
+                            setL(0xff);
+                            H--;
+                        }
+                        if(H == 0x00 && L == 0x00)temp1[1] = '1';
+                        else temp1[1] = '0';
+                        
+                        setFlagReg(temp1);
+                        break;
+                     }
+            case 'B':{
+                        C--;
+                        if(C==0x00){
+                            setL(0xff);
+                            B--;
+                        }
+                        if(B == 0x00 && C == 0x00)temp1[1] = '1';
+                        else temp1[1] = '0';
+                        
+                        setFlagReg(temp1);
+                        break;
+                     }
+            case 'D':{
+                        E--;
+                        if(E==0x00){
+                            setL(0xff);
+                            D--;
+                        }
+                        if(D == 0x00 && E == 0x00)temp1[1] = '1';
+                        else temp1[1] = '0';
+                        
+                        setFlagReg(temp1);
+                        break;
+                     }
+            default: System.out.println("invalid input");
+        }
+    }
+   
+    //Add register pair to HL
+    public static void DAD(char X) {
+        char[] temp1 = getFlagReg();
+        switch(X)
+        {
+            case 'B':{
+                        L = L + C;
+                        H = H + B;
+                        if(L>0xff)
+                        {
+                            H++;
+                        }
+                        if(H>0xff)
+                        {
+                            temp1[7]='1';
+                        }
+                        else temp1[7]='0';
+                        
+                        if(L==0x00 && H==0x00){
+                            temp1[1]='1';
+                        }
+                        else temp1[1]='0';
+                        break;
+                     }
+            case 'D':{
+                        L = L + E;
+                        H = H + D;
+                        if(L>0xff)
+                        {
+                            H++;
+                        }
+                        if(H>0xff)
+                        {
+                            temp1[7]='1';
+                        }
+                        else temp1[7]='0';
+                        
+                        if(L==0x00 && H==0x00){
+                            temp1[1]='1';
+                        }
+                        else temp1[1]='0';
+                        break;
+                     }
+            default: System.out.println("invalid input");break;
+            
+        }
+        
     }
     
-    
-    
-    ///////////////////////////////////////////////////////////////////
-    public static String hex2bin(int A)
-    {
-        String z = Integer.toBinaryString(A);
-        int b = Integer.parseInt(z);
-        String y = String.format("%08d",b);
-        return y;
-    }
-
 }
